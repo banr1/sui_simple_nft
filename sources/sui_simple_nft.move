@@ -1,5 +1,4 @@
 module sui_simple_nft::simple_nft {
-    use sui::url::{Self, Url};
     use std::string;
     use sui::event;
 
@@ -10,9 +9,6 @@ module sui_simple_nft::simple_nft {
         name: string::String,
         /// Description of the token
         description: string::String,
-        /// URL for the token
-        url: Url,
-        // TODO: allow custom attributes
     }
 
     // ===== Events =====
@@ -38,27 +34,16 @@ module sui_simple_nft::simple_nft {
         &nft.description
     }
 
-    /// Get the NFT's `url`
-    public fun url(nft: &SimpleNFT): &Url {
-        &nft.url
-    }
-
     // ===== Entrypoints =====
 
     #[allow(lint(self_transfer))]
-    /// Create a new devnet_nft
-    public fun mint_to_sender(
-        name: vector<u8>,
-        description: vector<u8>,
-        url: vector<u8>,
-        ctx: &mut TxContext
-    ) {
+    /// Create a new NFT and mint it to the sender
+    public fun mint_to_sender(ctx: &mut TxContext) {
         let sender = ctx.sender();
         let nft = SimpleNFT {
             id: object::new(ctx),
-            name: string::utf8(name),
-            description: string::utf8(description),
-            url: url::new_unsafe_from_bytes(url)
+            name: string::utf8(b"Simple NFT"),
+            description: string::utf8(b"This is a simple NFT."),
         };
 
         event::emit(NFTMinted {
@@ -75,20 +60,5 @@ module sui_simple_nft::simple_nft {
         nft: SimpleNFT, recipient: address, _: &mut TxContext
     ) {
         transfer::public_transfer(nft, recipient)
-    }
-
-    /// Update the `description` of `nft` to `new_description`
-    public fun update_description(
-        nft: &mut SimpleNFT,
-        new_description: vector<u8>,
-        _: &mut TxContext
-    ) {
-        nft.description = string::utf8(new_description)
-    }
-
-    /// Permanently delete `nft`
-    public fun burn(nft: SimpleNFT, _: &mut TxContext) {
-        let SimpleNFT { id, name: _, description: _, url: _ } = nft;
-        id.delete()
     }
 }
